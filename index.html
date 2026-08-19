@@ -578,6 +578,7 @@
         function beginShow() {
             if (showStarted) return;
             showStarted = true;
+            tryPlay(); // 第一次点击时立即开始播放音乐
             document.body.classList.remove('idle');
             document.body.classList.add('showing');
             // 8 张照片，每张间隔 1.55s，最后一张播完后再等一会弹出信封
@@ -737,6 +738,11 @@
                     songNameEl.textContent = '⚠️ 音乐加载失败，请确认 mp3 文件在同一文件夹';
                 });
             }
+        });
+
+        // 页面一打开就尝试自动播放（被浏览器拦截时，会在第一次点击时补上）
+        window.addEventListener('load', () => {
+            setTimeout(tryPlay, 500);
         });
 
         // ========== 单击任意位置开始放映（点中间相框换照片时除外） ==========
