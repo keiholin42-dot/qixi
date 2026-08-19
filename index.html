@@ -122,10 +122,55 @@
             100% { transform: translate(var(--fx), var(--fy)); opacity: 0.8; }
         }
 
+        /* ========== 左右照片（点缀） ========== */
+        #photoSide {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .side-photo {
+            position: absolute;
+            opacity: 0;
+            width: clamp(104px, 15vw, 168px);
+            padding: 8px 8px 30px;
+            background: linear-gradient(160deg, #fffdf8, #fdeef2);
+            border-radius: 6px;
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+        }
+        .side-photo img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 2px;
+        }
+        .side-photo::after {
+            content: '♡';
+            position: absolute;
+            left: 12px;
+            bottom: 7px;
+            color: #ff8fab;
+            font-size: 13px;
+        }
+        body.showing .side-photo {
+            animation: photoFloat 2.3s cubic-bezier(.2, .7, .2, 1) forwards;
+            animation-delay: calc(var(--i) * 1.55s);
+        }
+        @keyframes photoFloat {
+            from {
+                opacity: 0;
+                transform: translateY(48px) scale(.9) rotate(calc(var(--rot) - 9deg));
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotate(var(--rot));
+            }
+        }
+
         /* ========== 主容器 ========== */
         .container {
             position: relative;
-            z-index: 1;
+            z-index: 2;
             text-align: center;
             padding: 2rem 1.5rem;
             max-width: 560px;
@@ -133,72 +178,12 @@
             transition: opacity 1s ease;
         }
         /* 未开启信封时，正文先隐藏 */
-        body.sealed .container { opacity: 0; pointer-events: none; }
+        body.sealed .reveal { opacity: 0; pointer-events: none; }
         body.sealed .subtitle,
         body.sealed .message p,
         body.sealed .music-wrapper,
         body.sealed .signature { animation-play-state: paused; }
-        body.opened .container { opacity: 1; }
-
-        /* ========== 爱心信封 ========== */
-        .envelope-wrap {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            background: rgba(10, 10, 46, 0.38);
-            backdrop-filter: blur(3px);
-            cursor: pointer;
-            perspective: 900px;
-            transition: opacity 0.7s ease;
-        }
-        .envelope-wrap.fly { opacity: 0; pointer-events: none; }
-        .env-box {
-            width: min(86vw, 340px);
-            filter: drop-shadow(0 16px 38px rgba(255, 90, 140, 0.35));
-            animation: envFloat 3s ease-in-out infinite;
-            transition: transform 0.7s ease;
-        }
-        .envelope-wrap.fly .env-box { transform: scale(1.28); }
-        .env-svg { width: 100%; height: auto; display: block; overflow: visible; }
-        .env-flap {
-            transform-origin: 50% 0;
-            transform-box: fill-box;
-            transition: transform 0.6s ease 0.1s;
-        }
-        .envelope-wrap.open .env-flap { transform: rotateX(180deg); }
-        .env-letter {
-            transform: translateY(10px);
-            opacity: 0;
-            transition: transform 0.7s ease 0.25s, opacity 0.7s ease 0.25s;
-        }
-        .envelope-wrap.open .env-letter { transform: translateY(-46px); opacity: 1; }
-        .env-seal {
-            animation: sealBeat 1.3s ease-in-out infinite;
-            transform-box: fill-box;
-            transform-origin: center;
-        }
-        @keyframes sealBeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
-        @keyframes envFloat {
-            0%, 100% { transform: translateY(0) rotate(-1.2deg); }
-            50% { transform: translateY(-10px) rotate(1.2deg); }
-        }
-        .env-hint {
-            color: rgba(255, 215, 225, 0.95);
-            font-size: clamp(15px, 3.6vw, 19px);
-            letter-spacing: 0.35em;
-            text-indent: 0.35em;
-            text-shadow: 0 0 14px rgba(255, 130, 160, 0.6);
-            animation: hintBounce 1.6s ease-in-out infinite;
-        }
-        @keyframes hintBounce {
-            0%, 100% { transform: translateY(0); opacity: 0.75; }
-            50% { transform: translateY(7px); opacity: 1; }
-        }
+        body.opened .reveal { opacity: 1; }
 
         /* ========== 标题 ========== */
         h1 {
@@ -254,11 +239,11 @@
             to { opacity: 1; }
         }
 
-        /* ========== 照片相框 ========== */
+        /* ========== 照片相框（中间保持不变） ========== */
         .photo-frame {
             width: 220px;
             height: 220px;
-            margin: 2rem auto;
+            margin: 1.4rem auto 0.6rem;
             border-radius: 50%;
             padding: 4px;
             background: linear-gradient(135deg, #ff9a9e, #fbc2eb, #a18cd1, #fbc2eb, #ff9a9e);
@@ -291,6 +276,23 @@
             display: block;
         }
 
+        /* ========== 开始提示 ========== */
+        #hintStart {
+            margin-top: 1rem;
+            font-size: clamp(14px, 3.2vw, 17px);
+            color: rgba(255, 220, 230, 0.95);
+            letter-spacing: 0.3em;
+            text-indent: 0.3em;
+            text-shadow: 0 0 14px rgba(255, 140, 170, 0.6);
+            animation: hintStartPulse 1.8s ease-in-out infinite;
+            transition: opacity 0.8s ease;
+        }
+        body:not(.idle) #hintStart { opacity: 0; }
+        @keyframes hintStartPulse {
+            0%, 100% { transform: translateY(0); opacity: 0.75; }
+            50% { transform: translateY(6px); opacity: 1; }
+        }
+
         /* ========== 音乐播放器 ========== */
         .music-wrapper {
             margin-top: 2rem;
@@ -312,7 +314,6 @@
             border-radius: 20px;
             outline: none;
         }
-        /* 自定义播放按钮 */
         .play-btn {
             width: 56px;
             height: 56px;
@@ -386,17 +387,86 @@
             letter-spacing: 0.15rem;
         }
 
+        /* ========== 爱心信封（照片放映完后弹出） ========== */
+        .envelope-wrap {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: rgba(10, 10, 46, 0.45);
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            perspective: 900px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+        body.envelope-stage .envelope-wrap { opacity: 1; pointer-events: auto; }
+        .envelope-wrap.fly { opacity: 0; pointer-events: none; }
+        .env-box {
+            width: min(86vw, 340px);
+            filter: drop-shadow(0 16px 38px rgba(255, 90, 140, 0.35));
+            animation: envFloat 3s ease-in-out infinite;
+            transition: transform 0.7s ease;
+        }
+        .envelope-wrap.fly .env-box { transform: scale(1.28); }
+        .env-svg { width: 100%; height: auto; display: block; overflow: visible; }
+        .env-flap {
+            transform-origin: 50% 0;
+            transform-box: fill-box;
+            transition: transform 0.6s ease 0.1s;
+        }
+        .envelope-wrap.open .env-flap { transform: rotateX(180deg); }
+        .env-letter {
+            transform: translateY(10px);
+            opacity: 0;
+            transition: transform 0.7s ease 0.25s, opacity 0.7s ease 0.25s;
+        }
+        .envelope-wrap.open .env-letter { transform: translateY(-46px); opacity: 1; }
+        .env-seal {
+            animation: sealBeat 1.3s ease-in-out infinite;
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+        @keyframes sealBeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+        @keyframes envFloat {
+            0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+            50% { transform: translateY(-10px) rotate(1.2deg); }
+        }
+        .env-hint {
+            color: rgba(255, 215, 225, 0.95);
+            font-size: clamp(15px, 3.6vw, 19px);
+            letter-spacing: 0.35em;
+            text-indent: 0.35em;
+            text-shadow: 0 0 14px rgba(255, 130, 160, 0.6);
+            animation: hintBounce 1.6s ease-in-out infinite;
+        }
+        @keyframes hintBounce {
+            0%, 100% { transform: translateY(0); opacity: 0.75; }
+            50% { transform: translateY(7px); opacity: 1; }
+        }
+
         /* ========== 手机适配 ========== */
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
             h1 { font-size: 2.4rem; }
             .message { font-size: 1rem; line-height: 2; }
             .photo-frame { width: 180px; height: 180px; }
             .moon { width: 55px; height: 55px; top: 30px; right: 30px; }
             .music-wrapper audio { width: 260px; }
+            .side-photo {
+                width: clamp(58px, 15vw, 84px);
+                padding: 5px 5px 24px;
+            }
+            .side-photo::after { font-size: 9px; left: 7px; bottom: 5px; }
+            .container { padding: 1.4rem 0.6rem; }
         }
     </style>
 </head>
-<body class="sealed">
+<body class="sealed idle">
 
     <!-- 星空层 -->
     <div class="stars" id="stars"></div>
@@ -411,21 +481,25 @@
     <!-- 萤火虫容器 -->
     <div id="fireflies"></div>
 
+    <!-- 左右两侧照片（点击后逐张浮现） -->
+    <div id="photoSide">
+        <div class="side-photo" style="--i:0; --rot:-7deg; top:9%; left:4%;"><img src="p1.jpg" alt=""></div>
+        <div class="side-photo" style="--i:1; --rot:5deg;  top:31%; left:3%;"><img src="p2.jpg" alt=""></div>
+        <div class="side-photo" style="--i:2; --rot:-5deg; top:53%; left:5%;"><img src="p3.jpg" alt=""></div>
+        <div class="side-photo" style="--i:3; --rot:8deg;  top:75%; left:3%;"><img src="p4.jpg" alt=""></div>
+        <div class="side-photo" style="--i:4; --rot:6deg;  top:12%; right:4%;"><img src="p5.jpg" alt=""></div>
+        <div class="side-photo" style="--i:5; --rot:-8deg; top:34%; right:3%;"><img src="p6.jpg" alt=""></div>
+        <div class="side-photo" style="--i:6; --rot:5deg;  top:56%; right:5%;"><img src="p7.jpg" alt=""></div>
+        <div class="side-photo" style="--i:7; --rot:-6deg; top:78%; right:3%;"><img src="p8.jpg" alt=""></div>
+    </div>
+
     <!-- 主内容 -->
     <div class="container">
 
         <h1>七夕快乐</h1>
         <div class="subtitle">♡ Happy Chinese Valentine's Day ♡</div>
 
-        <div class="message">
-            <p>遇见你，是我这辈子最幸运的事。</p>
-            <p>从<span class="highlight">日出到日落</span>，从<span class="highlight2">春天到冬天</span>，</p>
-            <p>我想陪你走过<span class="highlight">每一个平凡的日子</span>。</p>
-            <p>余生很长，<span class="highlight2">有你真好</span>。</p>
-            <p>❤️ 七夕快乐，我的宝贝 ❤️</p>
-        </div>
-
-        <!-- 照片相框（默认使用文件夹里的 phton.jpg，点击可换成其他照片） -->
+        <!-- 中间照片（保持不变） -->
         <div class="photo-frame" onclick="document.getElementById('fileInput').click()">
             <div class="photo-inner">
                 <img id="preview" src="phton.jpg" alt="我们的照片">
@@ -433,21 +507,32 @@
         </div>
         <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="loadImage(event)">
 
-        <!-- 音乐播放器（本地音乐：我们俩 - 郭顶） -->
-        <div class="music-wrapper">
-            <div class="music-label">♫ 背景音乐 ♫</div>
-            <button class="play-btn" id="playBtn" title="播放/暂停">▶️</button>
-            <div class="song-name" id="songName">🎵 我们俩 - 郭顶</div>
-            <audio id="bgMusic" loop preload="auto">
-                <source src="我们俩-郭顶%23aBRn.mp3" type="audio/mpeg">
-            </audio>
-        </div>
+        <p id="hintStart">轻触屏幕 · 放映我们的回忆</p>
 
-        <div class="signature">— 爱你的我 —</div>
+        <div class="reveal">
+            <div class="message">
+                <p>遇见你，是我这辈子最幸运的事。</p>
+                <p>从<span class="highlight">日出到日落</span>，从<span class="highlight2">春天到冬天</span>，</p>
+                <p>我想陪你走过<span class="highlight">每一个平凡的日子</span>。</p>
+                <p>余生很长，<span class="highlight2">有你真好</span>。</p>
+                <p>❤️ 七夕快乐，我的宝贝 ❤️</p>
+            </div>
+
+            <div class="music-wrapper">
+                <div class="music-label">♫ 背景音乐 ♫</div>
+                <button class="play-btn" id="playBtn" title="播放/暂停">▶️</button>
+                <div class="song-name" id="songName">🎵 我们俩 - 郭顶</div>
+                <audio id="bgMusic" loop preload="auto">
+                    <source src="我们俩-郭顶%23aBRn.mp3" type="audio/mpeg">
+                </audio>
+            </div>
+
+            <div class="signature">— 爱你的我 —</div>
+        </div>
 
     </div>
 
-    <!-- 爱心信封：点击开启 -->
+    <!-- 爱心信封：照片放映完弹出，点击开启 -->
     <div class="envelope-wrap" id="envelope">
         <div class="env-box">
             <svg class="env-svg" viewBox="0 0 320 210">
@@ -488,6 +573,19 @@
     </div>
 
     <script>
+        // ========== 放映流程：单击 → 照片逐张浮现 → 弹出信封 → 点开信封出文字 ==========
+        let showStarted = false;
+        function beginShow() {
+            if (showStarted) return;
+            showStarted = true;
+            document.body.classList.remove('idle');
+            document.body.classList.add('showing');
+            // 8 张照片，每张间隔 1.55s，最后一张播完后再等一会弹出信封
+            setTimeout(() => {
+                document.body.classList.add('envelope-stage');
+            }, 8 * 1550 + 2800);
+        }
+
         // ========== 爱心信封：点击开启，音乐响起，文字缓缓显示 ==========
         const envelope = document.getElementById('envelope');
         let envelopeOpened = false;
@@ -578,13 +676,11 @@
             setTimeout(() => petal.remove(), dur * 1000 + 500);
         }
         setInterval(createPetal, 350);
-        // 初始花瓣
         for (let i = 0; i < 8; i++) setTimeout(createPetal, i * 200);
 
         // ========== 点击弹出爱心 ==========
         const emojis = ['❤️', '💕', '💗', '💖', '🌹', '✨', '🥰', '😘'];
         document.addEventListener('click', (e) => {
-            // 忽略点击输入框和播放按钮
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'IFRAME') return;
             if (e.target.closest && e.target.closest('#playBtn')) return;
             const heart = document.createElement('div');
@@ -601,9 +697,7 @@
         const playBtn = document.getElementById('playBtn');
         const songNameEl = document.getElementById('songName');
         let isPlaying = false;
-        let userInteracted = false;
 
-        // 加载失败提示
         bgMusic.addEventListener('error', () => {
             songNameEl.textContent = '⚠️ 音乐加载失败，请确认 mp3 文件在同一文件夹';
             playBtn.style.opacity = '0.4';
@@ -629,23 +723,6 @@
             }
         }
 
-        // 页面加载后尝试自动播放（浏览器会拦截，需点击解锁）
-        window.addEventListener('load', () => {
-            setTimeout(tryPlay, 1500);
-        });
-
-        function unlockAudio() {
-            userInteracted = true;
-            if (!isPlaying) {
-                tryPlay();
-            }
-            document.removeEventListener('click', unlockAudio);
-            document.removeEventListener('touchstart', unlockAudio);
-        }
-        document.addEventListener('click', unlockAudio);
-        document.addEventListener('touchstart', unlockAudio);
-
-        // 播放/暂停按钮
         playBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (isPlaying) {
@@ -653,7 +730,6 @@
                 playBtn.textContent = '▶️';
                 isPlaying = false;
             } else {
-                userInteracted = true;
                 bgMusic.play().then(() => {
                     isPlaying = true;
                     playBtn.textContent = '⏸️';
@@ -661,6 +737,12 @@
                     songNameEl.textContent = '⚠️ 音乐加载失败，请确认 mp3 文件在同一文件夹';
                 });
             }
+        });
+
+        // ========== 单击任意位置开始放映（点中间相框换照片时除外） ==========
+        document.addEventListener('click', (e) => {
+            if (e.target.closest && e.target.closest('.photo-frame')) return;
+            if (document.body.classList.contains('idle')) beginShow();
         });
 
         // ========== 照片加载（默认已显示 phton.jpg，点击可换图） ==========
