@@ -717,9 +717,10 @@
                 promise.then(() => {
                     isPlaying = true;
                     playBtn.textContent = '⏸️';
-                }).catch(() => {
+                }).catch((err) => {
                     isPlaying = false;
                     playBtn.textContent = '▶️';
+                    console.log('PLAY_ERR', err && err.name, err && err.message);
                 });
             }
         }
@@ -745,7 +746,11 @@
             setTimeout(tryPlay, 500);
         });
 
-        // ========== 单击任意位置开始放映（点中间相框换照片时除外） ==========
+        // ========== 触摸/单击任意位置开始放映（点中间相框换照片时除外） ==========
+        document.addEventListener('pointerdown', (e) => {
+            if (e.target.closest && e.target.closest('.photo-frame')) return;
+            if (document.body.classList.contains('idle')) beginShow();
+        });
         document.addEventListener('click', (e) => {
             if (e.target.closest && e.target.closest('.photo-frame')) return;
             if (document.body.classList.contains('idle')) beginShow();
