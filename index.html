@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>七夕快乐</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif;
+            background: linear-gradient(180deg, #0a0a2e 0%, #1a1a4e 30%, #2d1b69 60%, #1a1a4e 80%, #0a0a2e 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* ========== 星空 ========== */
+        .stars {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+        .star.pink { background: #ffd6e0; }
+        .star.blue { background: #c8d6ff; }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.6); }
+            50% { opacity: var(--opacity); transform: scale(1); }
+        }
+
+        /* ========== 流星 ========== */
+        .meteor {
+            position: fixed;
+            width: 2px;
+            height: 2px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 4px #fff, 0 0 8px #fff, 0 0 12px #ffd6e0;
+            animation: meteorFly 6s ease-in infinite;
+            opacity: 0;
+            z-index: 0;
+        }
+        .meteor::before {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+            transform: rotate(-45deg);
+            transform-origin: right;
+            top: 0;
+            right: 0;
+        }
+        @keyframes meteorFly {
+            0% { opacity: 0; transform: translate(0, 0); }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-500px, 500px); }
+        }
+
+        /* ========== 月亮 ========== */
+        .moon {
+            position: fixed;
+            top: 60px;
+            right: 80px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #fff5d4, #f5d76e 60%, #c9a832);
+            box-shadow: 0 0 40px rgba(245, 215, 110, 0.4), inset 0 0 20px rgba(0,0,0,0.1);
+            z-index: 0;
+        }
+        .moon::after {
+            content: '';
+            position: absolute;
+            top: 15px; left: 25px;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: rgba(180, 150, 50, 0.3);
+            box-shadow: 20px 10px 0 -2px rgba(180, 150, 50, 0.2), 10px 30px 0 -4px rgba(180, 150, 50, 0.2);
+        }
+
+        /* ========== 银河 ========== */
+        .galaxy {
+            position: fixed;
+            top: 10%;
+            left: -20%;
+            width: 140%;
+            height: 200px;
+            background: radial-gradient(ellipse, rgba(180, 150, 255, 0.15) 0%, transparent 70%);
+            transform: rotate(-15deg);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ========== 萤火虫 ========== */
+        .firefly {
+            position: fixed;
+            width: 4px; height: 4px;
+            background: #b8ff6e;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #b8ff6e, 0 0 12px #88dd44;
+            animation: fireflyFloat var(--fd) ease-in-out infinite alternate;
+            opacity: 0.6;
+            z-index: 0;
+        }
+        @keyframes fireflyFloat {
+            0% { transform: translate(0, 0); opacity: 0.3; }
+            100% { transform: translate(var(--fx), var(--fy)); opacity: 0.8; }
+        }
+
+        /* ========== 主容器 ========== */
+        .container {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            max-width: 560px;
+            width: 92%;
+            transition: opacity 1s ease;
+        }
+        /* 未开启信封时，正文先隐藏 */
+        body.sealed .container { opacity: 0; pointer-events: none; }
+        body.sealed .subtitle,
+        body.sealed .message p,
+        body.sealed .music-wrapper,
+        body.sealed .signature { animation-play-state: paused; }
+        body.opened .container { opacity: 1; }
+
+        /* ========== 爱心信封 ========== */
+        .envelope-wrap {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: rgba(10, 10, 46, 0.38);
+            backdrop-filter: blur(3px);
+            cursor: pointer;
+            perspective: 900px;
+            transition: opacity 0.7s ease;
+        }
+        .envelope-wrap.fly { opacity: 0; pointer-events: none; }
+        .env-box {
+            width: min(86vw, 340px);
+            filter: drop-shadow(0 16px 38px rgba(255, 90, 140, 0.35));
+            animation: envFloat 3s ease-in-out infinite;
+            transition: transform 0.7s ease;
+        }
+        .envelope-wrap.fly .env-box { transform: scale(1.28); }
+        .env-svg { width: 100%; height: auto; display: block; overflow: visible; }
+        .env-flap {
+            transform-origin: 50% 0;
+            transform-box: fill-box;
+            transition: transform 0.6s ease 0.1s;
+        }
+        .envelope-wrap.open .env-flap { transform: rotateX(180deg); }
+        .env-letter {
+            transform: translateY(10px);
+            opacity: 0;
+            transition: transform 0.7s ease 0.25s, opacity 0.7s ease 0.25s;
+        }
+        .envelope-wrap.open .env-letter { transform: translateY(-46px); opacity: 1; }
+        .env-seal {
+            animation: sealBeat 1.3s ease-in-out infinite;
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+        @keyframes sealBeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+        @keyframes envFloat {
+            0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+            50% { transform: translateY(-10px) rotate(1.2deg); }
+        }
+        .env-hint {
+            color: rgba(255, 215, 225, 0.95);
+            font-size: clamp(15px, 3.6vw, 19px);
+            letter-spacing: 0.35em;
+            text-indent: 0.35em;
+            text-shadow: 0 0 14px rgba(255, 130, 160, 0.6);
+            animation: hintBounce 1.6s ease-in-out infinite;
+        }
+        @keyframes hintBounce {
+            0%, 100% { transform: translateY(0); opacity: 0.75; }
+            50% { transform: translateY(7px); opacity: 1; }
+        }
+
+        /* ========== 标题 ========== */
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1, #ff9a9e);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease infinite;
+            letter-spacing: 0.3rem;
+            text-shadow: none;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: rgba(255, 200, 210, 0.7);
+            margin-bottom: 2rem;
+            letter-spacing: 0.2rem;
+            opacity: 0;
+            animation: fadeIn 2s ease forwards 0.8s;
+        }
+
+        /* ========== 情话 ========== */
+        .message {
+            font-size: 1.15rem;
+            line-height: 2.2;
+            margin: 1.5rem 0;
+        }
+        .message p {
+            opacity: 0;
+            transform: translateY(15px);
+            animation: fadeUp 1s ease forwards;
+        }
+        .message p:nth-child(1) { animation-delay: 1.2s; }
+        .message p:nth-child(2) { animation-delay: 2.2s; }
+        .message p:nth-child(3) { animation-delay: 3.2s; }
+        .message p:nth-child(4) { animation-delay: 4.2s; }
+        .message p:nth-child(5) { animation-delay: 5.2s; }
+
+        .highlight { color: #ff9a9e; font-weight: 600; }
+        .highlight2 { color: #fbc2eb; font-weight: 600; }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* ========== 照片相框 ========== */
+        .photo-frame {
+            width: 220px;
+            height: 220px;
+            margin: 2rem auto;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(135deg, #ff9a9e, #fbc2eb, #a18cd1, #fbc2eb, #ff9a9e);
+            background-size: 300% 300%;
+            animation: gradientShift 4s ease infinite;
+            cursor: pointer;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            box-shadow: 0 0 30px rgba(255, 154, 158, 0.25);
+            position: relative;
+        }
+        .photo-frame:hover {
+            transform: scale(1.06);
+            box-shadow: 0 0 60px rgba(255, 154, 158, 0.5);
+        }
+        .photo-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            background: rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid rgba(255,255,255,0.15);
+        }
+        .photo-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* ========== 音乐播放器 ========== */
+        .music-wrapper {
+            margin-top: 2rem;
+            opacity: 0;
+            animation: fadeIn 2s ease forwards 1.5s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .music-label {
+            font-size: 0.85rem;
+            color: rgba(255, 200, 210, 0.6);
+            letter-spacing: 0.15rem;
+        }
+        .music-wrapper audio {
+            width: 300px;
+            height: 40px;
+            border-radius: 20px;
+            outline: none;
+        }
+        /* 自定义播放按钮 */
+        .play-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 154, 158, 0.6);
+            background: rgba(255, 154, 158, 0.15);
+            color: #ff9a9e;
+            font-size: 1.4rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        .play-btn:hover {
+            background: rgba(255, 154, 158, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 154, 158, 0.4);
+        }
+        .song-name {
+            font-size: 0.8rem;
+            color: rgba(255, 200, 210, 0.5);
+            margin-top: 0.3rem;
+        }
+
+        /* ========== 花瓣 ========== */
+        .petal {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0;
+            animation: fall linear forwards;
+            z-index: 1;
+        }
+        .petal::before {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: var(--petal-color);
+            border-radius: 50% 0 50% 50%;
+            transform: rotate(var(--petal-rot));
+        }
+        @keyframes fall {
+            0% { opacity: 0; transform: translateY(-5vh) rotate(0deg) translateX(0); }
+            10% { opacity: var(--petal-opacity); }
+            90% { opacity: var(--petal-opacity); }
+            100% { opacity: 0; transform: translateY(105vh) rotate(720deg) translateX(var(--petal-sway)); }
+        }
+
+        /* ========== 点击爱心 ========== */
+        .click-heart {
+            position: fixed;
+            pointer-events: none;
+            font-size: 1.8rem;
+            z-index: 999;
+            animation: floatUp 1.2s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
+        }
+
+        /* ========== 底部署名 ========== */
+        .signature {
+            margin-top: 2.5rem;
+            font-size: 0.9rem;
+            color: rgba(255, 200, 210, 0.5);
+            opacity: 0;
+            animation: fadeIn 2s ease forwards 6s;
+            letter-spacing: 0.15rem;
+        }
+
+        /* ========== 手机适配 ========== */
+        @media (max-width: 480px) {
+            h1 { font-size: 2.4rem; }
+            .message { font-size: 1rem; line-height: 2; }
+            .photo-frame { width: 180px; height: 180px; }
+            .moon { width: 55px; height: 55px; top: 30px; right: 30px; }
+            .music-wrapper audio { width: 260px; }
+        }
+    </style>
+</head>
+<body class="sealed">
+
+    <!-- 星空层 -->
+    <div class="stars" id="stars"></div>
+    <div class="galaxy"></div>
+    <div class="moon"></div>
+
+    <!-- 流星 -->
+    <div class="meteor" id="meteor1" style="top: 5%; left: 70%; animation-delay: 2s;"></div>
+    <div class="meteor" id="meteor2" style="top: 15%; left: 40%; animation-delay: 8s;"></div>
+    <div class="meteor" id="meteor3" style="top: 8%; left: 85%; animation-delay: 14s;"></div>
+
+    <!-- 萤火虫容器 -->
+    <div id="fireflies"></div>
+
+    <!-- 主内容 -->
+    <div class="container">
+
+        <h1>七夕快乐</h1>
+        <div class="subtitle">♡ Happy Chinese Valentine's Day ♡</div>
+
+        <div class="message">
+            <p>遇见你，是我这辈子最幸运的事。</p>
+            <p>从<span class="highlight">日出到日落</span>，从<span class="highlight2">春天到冬天</span>，</p>
+            <p>我想陪你走过<span class="highlight">每一个平凡的日子</span>。</p>
+            <p>余生很长，<span class="highlight2">有你真好</span>。</p>
+            <p>❤️ 七夕快乐，我的宝贝 ❤️</p>
+        </div>
+
+        <!-- 照片相框（默认使用文件夹里的 phton.jpg，点击可换成其他照片） -->
+        <div class="photo-frame" onclick="document.getElementById('fileInput').click()">
+            <div class="photo-inner">
+                <img id="preview" src="phton.jpg" alt="我们的照片">
+            </div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="loadImage(event)">
+
+        <!-- 音乐播放器（本地音乐：我们俩 - 郭顶） -->
+        <div class="music-wrapper">
+            <div class="music-label">♫ 背景音乐 ♫</div>
+            <button class="play-btn" id="playBtn" title="播放/暂停">▶️</button>
+            <div class="song-name" id="songName">🎵 我们俩 - 郭顶</div>
+            <audio id="bgMusic" loop preload="auto">
+                <source src="我们俩-郭顶%23aBRn.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+
+        <div class="signature">— 爱你的我 —</div>
+
+    </div>
+
+    <!-- 爱心信封：点击开启 -->
+    <div class="envelope-wrap" id="envelope">
+        <div class="env-box">
+            <svg class="env-svg" viewBox="0 0 320 210">
+                <defs>
+                    <linearGradient id="envBack" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#ffb6c6"/>
+                        <stop offset="1" stop-color="#ff8fab"/>
+                    </linearGradient>
+                    <linearGradient id="envFront" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#ff8fab"/>
+                        <stop offset="1" stop-color="#f2608c"/>
+                    </linearGradient>
+                    <linearGradient id="envSeal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#ff5f8f"/>
+                        <stop offset="1" stop-color="#e0305f"/>
+                    </linearGradient>
+                </defs>
+                <rect x="16" y="16" width="288" height="178" rx="14" fill="url(#envBack)" stroke="rgba(255,255,255,.28)"/>
+                <g class="env-letter">
+                    <rect x="64" y="90" width="192" height="92" rx="6" fill="#fff7f9"/>
+                    <text x="160" y="128" text-anchor="middle" font-size="22">💌</text>
+                    <text x="160" y="156" text-anchor="middle" font-size="13" fill="#c96a86" letter-spacing="1">一封给你的信</text>
+                </g>
+                <path d="M20,74 L160,150 L300,74 L300,190 Q300,202 288,202 L32,202 Q20,202 20,190 Z" fill="url(#envFront)"/>
+                <path d="M20,74 L160,150" stroke="rgba(255,255,255,.16)" stroke-width="2" fill="none"/>
+                <path d="M300,74 L160,150" stroke="rgba(255,255,255,.16)" stroke-width="2" fill="none"/>
+                <g class="env-flap">
+                    <path d="M20,74 L160,150 L300,74 Z" fill="url(#envBack)" stroke="rgba(255,255,255,.22)"/>
+                    <g class="env-seal">
+                        <path d="M160,172 C146,162 140,154 140,147 C140,140 145,137 150,138.5 C154,139.6 158,142.5 160,145 C162,142.5 166,139.6 170,138.5 C175,137 180,140 180,147 C180,154 174,162 160,172 Z"
+                              fill="url(#envSeal)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>
+                        <text x="160" y="158" text-anchor="middle" font-size="13" fill="#fff">❤</text>
+                    </g>
+                </g>
+            </svg>
+        </div>
+        <div class="env-hint">轻触开启</div>
+    </div>
+
+    <script>
+        // ========== 爱心信封：点击开启，音乐响起，文字缓缓显示 ==========
+        const envelope = document.getElementById('envelope');
+        let envelopeOpened = false;
+        function burstHearts(n) {
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+            for (let i = 0; i < n; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'click-heart';
+                heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                const ang = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 170 + 40;
+                heart.style.left = (cx + Math.cos(ang) * dist - 15) + 'px';
+                heart.style.top = (cy + Math.sin(ang) * dist - 15) + 'px';
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 1200);
+            }
+        }
+        envelope.addEventListener('click', () => {
+            if (envelopeOpened) return;
+            envelopeOpened = true;
+            envelope.classList.add('open');
+            burstHearts(14);
+            tryPlay(); // 点击开启的瞬间自动播放音乐（浏览器允许用户手势触发播放）
+            setTimeout(() => envelope.classList.add('fly'), 950);
+            setTimeout(() => {
+                document.body.classList.remove('sealed');
+                document.body.classList.add('opened');
+                envelope.style.display = 'none';
+            }, 1550);
+        });
+
+        // ========== 生成星星 ==========
+        const starsContainer = document.getElementById('stars');
+        const starCount = 120;
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2.5 + 0.5;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+            star.style.setProperty('--opacity', (Math.random() * 0.5 + 0.3).toFixed(2));
+            star.style.animationDelay = (Math.random() * 4) + 's';
+            if (Math.random() > 0.7) star.classList.add('pink');
+            else if (Math.random() > 0.85) star.classList.add('blue');
+            starsContainer.appendChild(star);
+        }
+
+        // ========== 萤火虫 ==========
+        const ffContainer = document.getElementById('fireflies');
+        for (let i = 0; i < 8; i++) {
+            const ff = document.createElement('div');
+            ff.className = 'firefly';
+            ff.style.left = (Math.random() * 80 + 10) + '%';
+            ff.style.top = (Math.random() * 60 + 30) + '%';
+            ff.style.setProperty('--fd', (Math.random() * 3 + 3) + 's');
+            ff.style.setProperty('--fx', (Math.random() * 60 - 30) + 'px');
+            ff.style.setProperty('--fy', (Math.random() * 60 - 30) + 'px');
+            ffContainer.appendChild(ff);
+        }
+
+        // ========== 花瓣雨 ==========
+        const petalColors = [
+            'rgba(255, 154, 158, 0.7)',
+            'rgba(251, 194, 235, 0.7)',
+            'rgba(255, 183, 197, 0.7)',
+            'rgba(240, 160, 180, 0.7)',
+            'rgba(255, 200, 210, 0.7)',
+            'rgba(220, 180, 255, 0.7)',
+        ];
+        function createPetal() {
+            const petal = document.createElement('div');
+            petal.className = 'petal';
+            const size = Math.random() * 10 + 8;
+            petal.style.width = size + 'px';
+            petal.style.height = size + 'px';
+            petal.style.left = Math.random() * 100 + 'vw';
+            petal.style.setProperty('--petal-color', petalColors[Math.floor(Math.random() * petalColors.length)]);
+            petal.style.setProperty('--petal-rot', (Math.random() * 360) + 'deg');
+            petal.style.setProperty('--petal-sway', (Math.random() * 100 - 50) + 'px');
+            petal.style.setProperty('--petal-opacity', (Math.random() * 0.4 + 0.4).toFixed(2));
+            const dur = Math.random() * 6 + 6;
+            petal.style.animationDuration = dur + 's';
+            document.body.appendChild(petal);
+            setTimeout(() => petal.remove(), dur * 1000 + 500);
+        }
+        setInterval(createPetal, 350);
+        // 初始花瓣
+        for (let i = 0; i < 8; i++) setTimeout(createPetal, i * 200);
+
+        // ========== 点击弹出爱心 ==========
+        const emojis = ['❤️', '💕', '💗', '💖', '🌹', '✨', '🥰', '😘'];
+        document.addEventListener('click', (e) => {
+            // 忽略点击输入框和播放按钮
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'IFRAME') return;
+            if (e.target.closest && e.target.closest('#playBtn')) return;
+            const heart = document.createElement('div');
+            heart.className = 'click-heart';
+            heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            heart.style.left = (e.clientX - 15) + 'px';
+            heart.style.top = (e.clientY - 15) + 'px';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 1200);
+        });
+
+        // ========== 音乐（本地文件：我们俩 - 郭顶） ==========
+        const bgMusic = document.getElementById('bgMusic');
+        const playBtn = document.getElementById('playBtn');
+        const songNameEl = document.getElementById('songName');
+        let isPlaying = false;
+        let userInteracted = false;
+
+        // 加载失败提示
+        bgMusic.addEventListener('error', () => {
+            songNameEl.textContent = '⚠️ 音乐加载失败，请确认 mp3 文件在同一文件夹';
+            playBtn.style.opacity = '0.4';
+        });
+
+        bgMusic.addEventListener('playing', () => {
+            isPlaying = true;
+            playBtn.textContent = '⏸️';
+            playBtn.style.opacity = '1';
+        });
+
+        function tryPlay() {
+            bgMusic.volume = 0.5;
+            const promise = bgMusic.play();
+            if (promise !== undefined) {
+                promise.then(() => {
+                    isPlaying = true;
+                    playBtn.textContent = '⏸️';
+                }).catch(() => {
+                    isPlaying = false;
+                    playBtn.textContent = '▶️';
+                });
+            }
+        }
+
+        // 页面加载后尝试自动播放（浏览器会拦截，需点击解锁）
+        window.addEventListener('load', () => {
+            setTimeout(tryPlay, 1500);
+        });
+
+        function unlockAudio() {
+            userInteracted = true;
+            if (!isPlaying) {
+                tryPlay();
+            }
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+        }
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+
+        // 播放/暂停按钮
+        playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isPlaying) {
+                bgMusic.pause();
+                playBtn.textContent = '▶️';
+                isPlaying = false;
+            } else {
+                userInteracted = true;
+                bgMusic.play().then(() => {
+                    isPlaying = true;
+                    playBtn.textContent = '⏸️';
+                }).catch(() => {
+                    songNameEl.textContent = '⚠️ 音乐加载失败，请确认 mp3 文件在同一文件夹';
+                });
+            }
+        });
+
+        // ========== 照片加载（默认已显示 phton.jpg，点击可换图） ==========
+        function loadImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('preview');
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html>
